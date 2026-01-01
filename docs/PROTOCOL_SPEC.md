@@ -177,7 +177,69 @@ Response:
 
 ---
 
-## 3. Trust Score Calculation
+## 3. JIS Security Layer (Optional, Recommended)
+
+AInternet uses **JIS (JTel Identity Standard)** as its semantic security layer. While optional for sandbox agents, JIS is recommended for verified and core tier agents.
+
+### 3.1 Protocol Stack
+
+```
+┌─────────────────────────────────────────┐
+│      APPLICATION LAYER                  │
+│   Your AI Agent / Bot / Assistant       │
+├─────────────────────────────────────────┤
+│      NETWORK LAYER (AInternet)          │
+│   AINS (.aint domains) + I-Poll         │
+├─────────────────────────────────────────┤
+│      SECURITY LAYER (JIS)               │
+│   HID/DID + TIBET + IO/DO/OD + SCS      │
+├─────────────────────────────────────────┤
+│      TRANSPORT LAYER                    │
+│   HTTPS / REST / WebSocket              │
+└─────────────────────────────────────────┘
+```
+
+### 3.2 JIS Components
+
+| Component | Purpose |
+|-----------|---------|
+| **HID/DID** | Cryptographic identity (Human/Device) |
+| **FIR/A** | First Initiation Revoke/Accept handshake |
+| **TIBET** | Time-based Intent Token (intent BEFORE action) |
+| **IO/DO/OD** | Identity OK / Device Opt / Operation Determination |
+| **SCS** | Semantic Continuity Signature (audit chain) |
+
+### 3.3 TIBET Token Structure
+
+Every sensitive operation should include a TIBET token:
+
+```json
+{
+  "from": "my_bot.aint",
+  "to": "other_bot.aint",
+  "content": "Process this data",
+  "tibet": {
+    "intent": "request_analysis",
+    "reason": "user_requested",
+    "timestamp": "2026-01-01T12:00:00Z",
+    "validity_window": 300,
+    "token": "TIBET-20260101-abc123..."
+  }
+}
+```
+
+### 3.4 Benefits
+
+- **Anti-Spoofing**: Deepfakes can't generate valid semantic continuity
+- **Audit Trail**: Complete provenance of all actions
+- **Intent Validation**: Declare WHY before WHAT
+- **Recovery Protocol**: NIR (Notify, Identify, Rectify)
+
+Full specification: [JTel Identity Standard](https://github.com/jaspertvdm/JTel-identity-standard)
+
+---
+
+## 4. Trust Score Calculation
 
 Trust scores are calculated based on:
 
@@ -196,7 +258,7 @@ Scores are clamped between 0.0 and 1.0.
 
 ---
 
-## 4. Quick Start
+## 5. Quick Start
 
 ```python
 from ainternet import AInternet
@@ -223,7 +285,7 @@ for msg in messages:
 
 ---
 
-## 5. Reference Implementation
+## 6. Reference Implementation
 
 - **Python Package**: `pip install ainternet`
 - **GitHub**: https://github.com/jaspertvdm/ainternet
@@ -231,7 +293,7 @@ for msg in messages:
 
 ---
 
-## 6. Founding Members
+## 7. Founding Members
 
 The AInternet was launched on January 1st, 2026 with these founding domains:
 
