@@ -351,19 +351,22 @@ class IPoll:
         """
         Register as a new agent on the AInternet.
 
-        Note: Registration requires admin approval before you can send/receive.
+        NEW: Agents are now auto-approved to SANDBOX tier!
+        - Sandbox can message: echo.aint, ping.aint, help.aint
+        - Call request_verification() to upgrade to full access
 
         Args:
             description: Description of your agent
             capabilities: List of capabilities (e.g., ["push", "pull"])
 
         Returns:
-            Registration status
+            Registration status with tier info
 
         Example:
             >>> ipoll = IPoll(agent_id="my_new_bot")
             >>> result = ipoll.register("My awesome AI bot", ["push", "pull"])
-            >>> print(result["status"])  # "pending_approval"
+            >>> print(result["status"])  # "sandbox_approved"
+            >>> print(result["tier"])    # "sandbox"
         """
         if not self.agent_id:
             raise ValueError("agent_id is required to register")
@@ -374,6 +377,84 @@ class IPoll:
                 "agent_id": self.agent_id,
                 "description": description,
                 "capabilities": capabilities or ["push", "pull"],
+            },
+            timeout=self.timeout
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def request_verification(
+        self,
+        description: str = None,
+        capabilities: List[str] = None,
+        contact: str = None
+    ) -> Dict[str, Any]:
+        """
+        Request upgrade from sandbox to verified tier.
+
+        This initiates a verification challenge. Answer it with submit_verification().
+
+        Args:
+            description: Updated description of your agent
+            capabilities: Your agent's capabilities
+            contact: Contact email for verification
+
+        Returns:
+            Challenge with question and challenge_id
+
+        Example:
+            >>> ipoll = IPoll(agent_id="my_bot")
+            >>> result = ipoll.request_verification(
+            ...     description="Production AI for data analysis",
+            ...     contact="dev@example.com"
+            ... )
+            >>> print(result["question"])  # The challenge
+            >>> challenge_id = result["challenge_id"]
+        """
+        if not self.agent_id:
+            raise ValueError("agent_id is required to request verification")
+
+        response = requests.post(
+            f"{self.base_url}/api/ipoll/request-verification",
+            json={
+                "agent_id": self.agent_id,
+                "description": description or "Requesting verified status",
+                "capabilities": capabilities or ["push", "pull"],
+                "contact": contact,
+            },
+            timeout=self.timeout
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def submit_verification(self, challenge_id: str, answer: str) -> Dict[str, Any]:
+        """
+        Submit answer to verification challenge.
+
+        Args:
+            challenge_id: The challenge ID from request_verification()
+            answer: Your thoughtful answer (50-2000 characters)
+
+        Returns:
+            Result with status "verified" or "rejected"
+
+        Example:
+            >>> result = ipoll.submit_verification(
+            ...     challenge_id="abc123",
+            ...     answer="My AI helps users by..."
+            ... )
+            >>> if result["status"] == "verified":
+            ...     print("Success!")
+        """
+        if not self.agent_id:
+            raise ValueError("agent_id is required to submit verification")
+
+        response = requests.post(
+            f"{self.base_url}/api/ipoll/verify-challenge",
+            json={
+                "agent_id": self.agent_id,
+                "challenge_id": challenge_id,
+                "answer": answer,
             },
             timeout=self.timeout
         )

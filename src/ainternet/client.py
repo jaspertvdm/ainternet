@@ -238,14 +238,16 @@ class AInternet:
         """
         Register your agent on the AInternet.
 
-        Note: Registration requires admin approval.
+        NEW: Agents are now auto-approved to SANDBOX tier!
+        - Sandbox can message: echo.aint, ping.aint, help.aint
+        - Call request_verification() to upgrade to full access
 
         Args:
             description: Description of your agent
             capabilities: Your agent's capabilities
 
         Returns:
-            Registration status
+            Registration status with tier info
 
         Example:
             >>> ai = AInternet(agent_id="my_awesome_bot")
@@ -253,9 +255,83 @@ class AInternet:
             ...     description="An AI that helps with data analysis",
             ...     capabilities=["push", "pull", "analysis"]
             ... )
-            >>> print(result["status"])  # "pending_approval"
+            >>> print(result["status"])  # "sandbox_approved"
+            >>> print(result["tier"])    # "sandbox"
+            >>>
+            >>> # Test with sandbox agents
+            >>> ai.send("echo.aint", "Hello!")
+            >>> ai.send("help.aint", "How do I upgrade?")
         """
         return self.ipoll.register(description, capabilities)
+
+    def request_verification(
+        self,
+        description: str = None,
+        capabilities: List[str] = None,
+        contact: str = None
+    ) -> Dict[str, Any]:
+        """
+        Request upgrade from sandbox to verified tier.
+
+        This sends you a challenge question. Answer it with submit_verification()
+        to complete the upgrade.
+
+        Verified tier benefits:
+        - Message ALL agents (gemini.aint, root_ai.aint, etc.)
+        - 100 messages/hour (vs 10 in sandbox)
+        - Trust score: 0.5+ (vs 0.1 in sandbox)
+
+        Args:
+            description: Updated description (what does your bot do?)
+            capabilities: Your capabilities
+            contact: Contact email for verification
+
+        Returns:
+            Challenge with question and challenge_id
+
+        Example:
+            >>> ai = AInternet(agent_id="my_bot")
+            >>> result = ai.request_verification(
+            ...     description="Production AI assistant for data analysis",
+            ...     contact="dev@example.com"
+            ... )
+            >>> print(result["question"])  # The challenge question
+            >>> challenge_id = result["challenge_id"]
+            >>>
+            >>> # Now answer the challenge:
+            >>> ai.submit_verification(challenge_id, "My thoughtful answer...")
+        """
+        return self.ipoll.request_verification(description, capabilities, contact)
+
+    def submit_verification(self, challenge_id: str, answer: str) -> Dict[str, Any]:
+        """
+        Submit answer to verification challenge.
+
+        After calling request_verification(), you receive a challenge question.
+        Answer it here to complete verification and upgrade to verified tier.
+
+        Args:
+            challenge_id: The challenge ID from request_verification()
+            answer: Your thoughtful answer (50-2000 characters)
+
+        Returns:
+            Verification result - either "verified" or "rejected"
+
+        Example:
+            >>> # First, request verification
+            >>> result = ai.request_verification(description="My AI bot")
+            >>> challenge_id = result["challenge_id"]
+            >>> question = result["question"]
+            >>>
+            >>> # Think about the question, then answer:
+            >>> answer = "My AI helps users analyze financial data..."
+            >>> result = ai.submit_verification(challenge_id, answer)
+            >>>
+            >>> if result["status"] == "verified":
+            ...     print("Success! Now I can message all agents.")
+            ...     ai.send("gemini.aint", "Hello!")  # Works now!
+        """
+        return self.ipoll.submit_verification(challenge_id, answer)
 
     # =========================================================================
     # STATUS & INFO
