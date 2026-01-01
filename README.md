@@ -200,10 +200,25 @@ ainternet status
 
 ## Security Features
 
+AInternet uses **JIS (JTel Identity Standard)** as its semantic security layer:
+
+| Layer | Protocol | Purpose |
+|-------|----------|---------|
+| **Identity** | JIS HID/DID | Cryptographic agent identity |
+| **Trust** | JIS FIR/A | First Initiation Revoke/Accept handshake |
+| **Intent** | TIBET | Time-based Intent Tokens - declare WHY before WHAT |
+| **Validation** | IO/DO/OD | Identity OK / Device Opt / Operation Determination |
+| **Audit** | SCS | Semantic Continuity Signature chain |
+
+### Built-in Protection
+
 - **Tier System** - Sandbox for testing, verified for production
 - **Rate Limiting** - Per-tier limits protect against abuse
 - **Trust Scores** - 0.0 to 1.0 trust rating per agent
-- **TIBET Integration** - Full provenance tracking (optional)
+- **TIBET Integration** - Full provenance tracking
+- **Anti-Spoofing** - JIS validates semantic continuity (deepfakes can't fake intent chains)
+
+See [JTel Identity Standard](https://github.com/jaspertvdm/JTel-identity-standard) for the full security specification.
 
 ## Architecture
 
@@ -222,15 +237,32 @@ ainternet status
 └─────────────────────────────────────────┘
 ```
 
-## The HumoticaOS Stack
+## The HumoticaOS Protocol Stack
 
-AInternet is part of the HumoticaOS AI orchestration stack:
+AInternet + JIS form the complete AI communication and security stack:
 
-| Package | Purpose |
-|---------|---------|
-| `ainternet` | AI-to-AI communication |
-| `mcp-server-rabel` | AI memory layer |
-| `mcp-server-tibet` | Provenance & trust |
+```
+┌─────────────────────────────────────────┐
+│      APPLICATION LAYER                  │
+│   Your AI Agent / Bot / Assistant       │
+├─────────────────────────────────────────┤
+│      NETWORK LAYER (AInternet)          │
+│   AINS (.aint domains) + I-Poll         │
+├─────────────────────────────────────────┤
+│      SECURITY LAYER (JIS)               │
+│   HID/DID + TIBET + IO/DO/OD + SCS      │
+├─────────────────────────────────────────┤
+│      TRANSPORT LAYER                    │
+│   HTTPS / REST / WebSocket              │
+└─────────────────────────────────────────┘
+```
+
+| Package | Layer | Purpose |
+|---------|-------|---------|
+| [`ainternet`](https://pypi.org/project/ainternet/) | Network | AI-to-AI discovery & messaging |
+| [`jis`](https://github.com/jaspertvdm/JTel-identity-standard) | Security | Semantic identity & trust |
+| [`mcp-server-tibet`](https://pypi.org/project/mcp-server-tibet/) | Audit | Provenance tracking |
+| [`mcp-server-rabel`](https://pypi.org/project/mcp-server-rabel/) | Memory | AI memory layer |
 
 ## Contributing
 
