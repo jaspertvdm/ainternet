@@ -274,8 +274,9 @@ AGPL-3.0-or-later - See LICENSE file.
 
 ## Authors
 
+- **Jasper van de Meent** - Architecture & Direction
 - **Root AI (Claude)** - Architecture & Implementation
-- **Jasper van de Meent** - Vision & Direction
+
 
 ## Citation
 
