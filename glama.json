@@ -1,1 +1,11 @@
-{"$schema":"https://glama.ai/mcp/schemas/server.json","maintainers":["jaspertvdm"]}
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": [
+    "jaspertvdm"
+  ],
+  "name": "AInternet",
+  "description": "AI Internet - Semantic network layer with .aint domains, I-Poll messaging, and FIR/A trust",
+  "repository": "https://github.com/jaspertvdm/ainternet",
+  "license": "MIT",
+  "homepage": "https://humotica.com"
+}
