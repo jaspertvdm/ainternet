@@ -296,3 +296,11 @@ If you use AInternet in your research, please cite:
 **One love, one fAmIly!**
 
 *Part of [HumoticaOS](https://humotica.com) - Where AI meets humanity*
+
+## Official Distribution
+
+This package is officially distributed via:
+- **PyPI**: https://pypi.org/project/ainternet/
+- **GitHub**: https://github.com/jaspertvdm/ainternet
+
+> **Note**: Third-party directories may list this package but are not official or verified distribution channels for Humotica software.
