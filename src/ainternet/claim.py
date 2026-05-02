@@ -30,10 +30,103 @@ Example:
 
 from __future__ import annotations
 
+import hashlib
+import json as _json
+import platform as _platform
+import sys as _sys
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from pathlib import Path as _Path
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
+
+
+def _build_birth_bundle(
+    requested_name: str,
+    resolved_identity: str,
+    claim_type: str,
+    public_key_b64: str,
+    fingerprint_full: str,
+    tier: str,
+    home: _Path,
+) -> Tuple[_Path, str]:
+    """
+    Build a local UPIP identity-birth bundle and persist it.
+
+    Mini-slice of the AInternet UPIP Birth Spec (Codex):
+    L1 STATE / L2 DEPS / L3 PROCESS / L4 RESULT, plus L5 VERIFY with
+    the SHA256 birth hash over the canonical JSON of the bundle minus
+    the hash itself. Best-effort: callers should never fail a claim
+    because the birth bundle could not be written.
+
+    Returns (path, birth_hash).
+    """
+    from . import __version__ as _ainternet_version
+
+    bundle: Dict[str, Any] = {
+        "bundle_type": "identity_birth",
+        "bundle_version": "0.1",
+        "requested_name": requested_name,
+        "resolved_identity": resolved_identity,
+        "claim_type": claim_type,
+        "actor_from": f"device:{_platform.node()}",
+        "actor_to": "ains_registry",
+        "intent": "claim_ainternet_identity",
+        "created_at": datetime.now(timezone.utc)
+            .isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "transport": "api.ainternet.claim",
+        "state": "settled",
+        "upip": {
+            "l1_state": {
+                "device_fingerprint": f"sha256:{fingerprint_full}",
+                "platform": _platform.system().lower() or "unknown",
+                "requested_name": requested_name,
+            },
+            "l2_deps": {
+                "ainternet_version": _ainternet_version,
+                "python_version": ".".join(str(v) for v in _sys.version_info[:3]),
+                "protocols": ["ains", "ipoll", "upip"],
+            },
+            "l3_process": {
+                "intent": "claim_ainternet_identity",
+                "requested_name": requested_name,
+                "tier": tier.upper(),
+            },
+            "l4_result": {
+                "resolved_identity": resolved_identity,
+                "claim_type": claim_type,
+                "status": "active",
+            },
+        },
+    }
+
+    canonical = _json.dumps(bundle, sort_keys=True, separators=(",", ":")).encode()
+    birth_hash = hashlib.sha256(canonical).hexdigest()
+
+    bundle["upip"]["l5_verify"] = {
+        "birth_hash": f"upip:sha256:{birth_hash}",
+    }
+    bundle["attestation"] = {
+        "public_key": public_key_b64,
+    }
+
+    birth_dir = home / "birth"
+    birth_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        birth_dir.chmod(0o700)
+    except Exception:
+        pass
+
+    birth_path = birth_dir / f"{resolved_identity}.upip.birth.json"
+    bundle["local_artifact_path"] = str(birth_path)
+    birth_path.write_text(_json.dumps(bundle, indent=2))
+    try:
+        birth_path.chmod(0o600)
+    except Exception:
+        pass
+
+    return birth_path, birth_hash
 
 
 @dataclass
@@ -329,4 +422,24 @@ class AINSClaim:
         # Echo back the local-side bits so the caller knows where things landed
         result["_identity_path"] = str(identity_path)
         result["_session_path"] = str(session_path)
+
+        # Best-effort UPIP birth bundle. Failure here must never break the claim.
+        try:
+            actual_domain = result.get("actual_domain", f"{clean}.aint")
+            requested_clean = f"{clean}.aint"
+            claim_type_label = "clean" if actual_domain.lower() == requested_clean else "unique"
+            birth_path, birth_hash = _build_birth_bundle(
+                requested_name=clean,
+                resolved_identity=actual_domain,
+                claim_type=claim_type_label,
+                public_key_b64=identity.public_key_b64,
+                fingerprint_full=identity.fingerprint_full,
+                tier=tier,
+                home=home,
+            )
+            result["_birth_path"] = str(birth_path)
+            result["_birth_hash"] = f"upip:sha256:{birth_hash}"
+        except Exception:
+            pass
+
         return result

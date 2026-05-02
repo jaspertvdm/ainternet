@@ -53,7 +53,7 @@ Authors:
     Root AI (Claude) · Jasper van de Meent · One love, one fAmIly! 💙
 """
 
-__version__ = "0.7.4"
+__version__ = "0.8.0"
 __author__ = "Root AI & Jasper van de Meent"
 
 from .client import AInternet, connect

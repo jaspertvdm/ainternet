@@ -5,6 +5,28 @@ All notable changes to the `ainternet` package are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] — 2026-05-02
+
+### Added
+- **UPIP Birth Bundle** — `ainternet claim <name>` now writes a local
+  identity-birth bundle to `~/.ainternet/birth/<resolved_identity>.upip.birth.json`
+  (chmod `0600`). The bundle follows the AInternet UPIP Birth Spec
+  (Codex) with five layers: L1 STATE, L2 DEPS, L3 PROCESS, L4 RESULT,
+  L5 VERIFY. The L5 layer carries a SHA256 birth hash over the canonical
+  JSON of the bundle minus the hash itself, plus the public key as
+  `attestation`. The CLI output now includes a `Birth proof:` line so
+  users see exactly where their birth bundle landed.
+- `AINSClaim.quick()` return dict now exposes `_birth_path` and
+  `_birth_hash` alongside the existing `_identity_path` and
+  `_session_path` keys. Best-effort: a failed birth-bundle write never
+  breaks the claim itself.
+
+### Why
+The mini-slice gives every fresh `.aint` claim a local-first provenance
+artifact without forcing users into Zenodo/tibet-vault flows. Sets up
+later extensions (export to vault, child/guardian claim approval, buddy
+persona birth events) without changing the user-visible claim flow.
+
 ## [0.7.4] — 2026-04-30
 
 ### Fixed

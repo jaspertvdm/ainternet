@@ -220,6 +220,9 @@ def main():
                 print(f"  Tier:       {tier}")
                 print(f"  Identity:   {DIM}{identity_path}{RESET}")
                 print(f"  Session:    {DIM}{session_path}{RESET}")
+                birth_path = result.get("_birth_path")
+                if birth_path:
+                    print(f"  Birth proof: {DIM}{birth_path}{RESET}")
                 if not is_clean:
                     print(f"\n  {DIM}Use this exact .aint address everywhere — Python, MCP,{RESET}")
                     print(f"  {DIM}mobile, browser. Clean names like {requested_clean} are a{RESET}")
